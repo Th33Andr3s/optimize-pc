@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Optimizador de PC - Limpiador de Archivos Temporales y Caché
-Autor: Asistente IA
-Versión: 1.0
-"""
-
 import os
 import shutil
 import tempfile
