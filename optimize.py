@@ -10,7 +10,7 @@ class PCOptimizer:
     def __init__(self):
         self.total_freed = 0
         self.cleaned_locations = []
-        
+
     def get_size_format(self, size_bytes):
         """Convierte bytes a formato legible"""
         if size_bytes == 0:
@@ -21,7 +21,7 @@ class PCOptimizer:
             size_bytes /= 1024.0
             i += 1
         return f"{size_bytes:.2f} {size_names[i]}"
-    
+
     def get_folder_size(self, folder_path):
         """Calcula el tamaño total de una carpeta"""
         total_size = 0
@@ -36,11 +36,11 @@ class PCOptimizer:
         except (OSError, PermissionError):
             pass
         return total_size
-    
+
     def clean_temp_files(self):
         """Limpia archivos temporales del sistema"""
         print("🧹 Limpiando archivos temporales...")
-        
+
         temp_dirs = [
             tempfile.gettempdir(),
             os.path.expandvars(r'%USERPROFILE%\AppData\Local\Temp'),
@@ -48,9 +48,9 @@ class PCOptimizer:
             os.path.expandvars(r'%TEMP%'),
             os.path.expandvars(r'%TMP%')
         ]
-        
+
         cleaned_size = 0
-        
+
         for temp_dir in temp_dirs:
             if os.path.exists(temp_dir):
                 size_before = self.get_folder_size(temp_dir)
@@ -58,17 +58,17 @@ class PCOptimizer:
                 size_after = self.get_folder_size(temp_dir)
                 freed = size_before - size_after
                 cleaned_size += freed
-                
+
                 if cleaned_files > 0:
                     self.cleaned_locations.append(f"📁 {temp_dir}: {cleaned_files} archivos, {self.get_size_format(freed)} liberados")
-        
+
         self.total_freed += cleaned_size
         print(f"✅ Archivos temporales: {self.get_size_format(cleaned_size)} liberados")
-    
+
     def clean_browser_cache(self):
         """Limpia caché de navegadores populares"""
         print("🌐 Limpiando caché de navegadores...")
-        
+
         browser_paths = {
             'Chrome': [
                 os.path.expandvars(r'%USERPROFILE%\AppData\Local\Google\Chrome\User Data\Default\Cache'),
@@ -81,9 +81,9 @@ class PCOptimizer:
                 os.path.expandvars(r'%USERPROFILE%\AppData\Local\Microsoft\Edge\User Data\Default\Cache')
             ]
         }
-        
+
         cleaned_size = 0
-        
+
         for browser, paths in browser_paths.items():
             for path in paths:
                 if 'Firefox' in browser and os.path.exists(path):
@@ -104,14 +104,14 @@ class PCOptimizer:
                     cleaned_size += freed
                     if cleaned_files > 0:
                         self.cleaned_locations.append(f"🌐 {browser} Cache: {cleaned_files} archivos, {self.get_size_format(freed)} liberados")
-        
+
         self.total_freed += cleaned_size
         print(f"✅ Caché de navegadores: {self.get_size_format(cleaned_size)} liberados")
-    
+
     def clean_windows_cache(self):
         """Limpia caché específico de Windows"""
         print("🪟 Limpiando caché de Windows...")
-        
+
         windows_cache_dirs = [
             os.path.expandvars(r'%USERPROFILE%\AppData\Local\Microsoft\Windows\INetCache'),
             os.path.expandvars(r'%USERPROFILE%\AppData\Local\Microsoft\Windows\WebCache'),
@@ -120,9 +120,9 @@ class PCOptimizer:
             os.path.expandvars(r'%WINDIR%\Logs'),
             os.path.expandvars(r'%USERPROFILE%\AppData\Local\IconCache.db')
         ]
-        
+
         cleaned_size = 0
-        
+
         for cache_dir in windows_cache_dirs:
             if os.path.exists(cache_dir):
                 if os.path.isfile(cache_dir):
@@ -142,21 +142,21 @@ class PCOptimizer:
                     cleaned_size += freed
                     if cleaned_files > 0:
                         self.cleaned_locations.append(f"🪟 {os.path.basename(cache_dir)}: {cleaned_files} archivos, {self.get_size_format(freed)} liberados")
-        
+
         self.total_freed += cleaned_size
         print(f"✅ Caché de Windows: {self.get_size_format(cleaned_size)} liberados")
-    
+
     def clean_recycle_bin(self):
         """Vacía la papelera de reciclaje"""
         print("🗑️ Vaciando papelera de reciclaje...")
-        
+
         try:
             # Usando PowerShell para vaciar la papelera
             result = subprocess.run([
                 'powershell', '-Command',
                 'Clear-RecycleBin -Confirm:$false'
             ], capture_output=True, text=True, shell=True)
-            
+
             if result.returncode == 0:
                 print("✅ Papelera de reciclaje vaciada")
                 self.cleaned_locations.append("🗑️ Papelera de reciclaje vaciada")
@@ -164,11 +164,11 @@ class PCOptimizer:
                 print("⚠️ No se pudo vaciar la papelera automáticamente")
         except Exception as e:
             print(f"⚠️ Error al vaciar papelera: {e}")
-    
+
     def _clean_directory(self, directory_path):
         """Limpia archivos de un directorio específico"""
         cleaned_files = 0
-        
+
         try:
             for root, dirs, files in os.walk(directory_path):
                 for file in files:
@@ -178,7 +178,7 @@ class PCOptimizer:
                         cleaned_files += 1
                     except (OSError, PermissionError, FileNotFoundError):
                         continue
-                
+
                 # Intentar eliminar directorios vacíos
                 for dir in dirs:
                     dir_path = os.path.join(root, dir)
@@ -187,43 +187,63 @@ class PCOptimizer:
                             os.rmdir(dir_path)
                     except (OSError, PermissionError):
                         continue
-                        
+
         except (OSError, PermissionError):
             pass
-            
+
         return cleaned_files
-    
+
     def run_disk_cleanup(self):
         """Ejecuta el limpiador de disco de Windows"""
         print("💿 Ejecutando limpiador de disco de Windows...")
-        
+
         try:
             subprocess.run(['cleanmgr', '/sagerun:1'], shell=True)
             print("✅ Limpiador de disco ejecutado")
             self.cleaned_locations.append("💿 Limpiador de disco de Windows ejecutado")
         except Exception as e:
             print(f"⚠️ No se pudo ejecutar el limpiador de disco: {e}")
-    
-    def optimize(self, include_disk_cleanup=False):
+
+    def shutdown_pc(self, countdown=10):
+        """Apaga la PC después de un countdown"""
+        print(f"\n🔌 Apagando PC en {countdown} segundos...")
+        print("⚠️ Presiona Ctrl+C para cancelar el apagado")
+
+        try:
+            for i in range(countdown, 0, -1):
+                print(f"⏳ Apagado en {i} segundos...", end='\r')
+                time.sleep(1)
+
+            print("\n🔌 Apagando PC ahora...")
+            # Comando para apagar Windows (forzado sin hibernación)
+            subprocess.run(['shutdown', '/s', '/f', '/t', '0'], shell=True)
+
+        except KeyboardInterrupt:
+            print("\n\n❌ Apagado cancelado por el usuario.")
+            return False
+
+        return True
+
+    def optimize(self, include_disk_cleanup=False, shutdown_after=False):
         """Ejecuta todas las operaciones de optimización"""
         print("=" * 50)
         print("🚀 INICIANDO OPTIMIZACIÓN DE PC")
         print("=" * 50)
-        
+
         start_time = time.time()
-        
+
         # Limpiezas principales
         self.clean_temp_files()
         self.clean_browser_cache()
         self.clean_windows_cache()
         self.clean_recycle_bin()
-        
+
         if include_disk_cleanup:
             self.run_disk_cleanup()
-        
+
         end_time = time.time()
         duration = end_time - start_time
-        
+
         # Reporte final
         print("\n" + "=" * 50)
         print("📊 REPORTE DE OPTIMIZACIÓN")
@@ -231,35 +251,43 @@ class PCOptimizer:
         print(f"⏱️ Tiempo total: {duration:.2f} segundos")
         print(f"💾 Espacio total liberado: {self.get_size_format(self.total_freed)}")
         print(f"📁 Ubicaciones limpiadas: {len(self.cleaned_locations)}")
-        
+
         if self.cleaned_locations:
             print("\n📋 Detalle de limpieza:")
             for location in self.cleaned_locations:
                 print(f"  {location}")
-        
+
         print("\n✨ ¡Optimización completada!")
         print("=" * 50)
+
+        # Apagar PC si se solicitó
+        if shutdown_after:
+            self.shutdown_pc(countdown=10)
 
 def main():
     """Función principal"""
     print("🔧 Optimizador de PC - Limpiador de Archivos")
     print("⚠️  ADVERTENCIA: Este programa eliminará archivos. Asegúrate de cerrar todos los programas.")
-    
+
     response = input("\n¿Deseas continuar? (s/n): ").lower().strip()
-    
+
     if response not in ['s', 'si', 'sí', 'y', 'yes']:
         print("❌ Operación cancelada.")
         return
-    
+
     disk_cleanup = input("\n¿Incluir limpiador de disco de Windows? (s/n): ").lower().strip()
     include_cleanup = disk_cleanup in ['s', 'si', 'sí', 'y', 'yes']
-    
+
+    shutdown_pc = input("\n¿Apagar la PC al finalizar? (s/n): ").lower().strip()
+    do_shutdown = shutdown_pc in ['s', 'si', 'sí', 'y', 'yes']
+
     try:
         optimizer = PCOptimizer()
-        optimizer.optimize(include_disk_cleanup=include_cleanup)
-        
-        input("\n📱 Presiona Enter para salir...")
-        
+        optimizer.optimize(include_disk_cleanup=include_cleanup, shutdown_after=do_shutdown)
+
+        if not do_shutdown:
+            input("\n📱 Presiona Enter para salir...")
+
     except KeyboardInterrupt:
         print("\n\n❌ Operación interrumpida por el usuario.")
     except Exception as e:
@@ -277,8 +305,8 @@ if __name__ == "__main__":
             is_admin = ctypes.windll.shell32.IsUserAnAdmin()
         except:
             is_admin = False
-    
+
     if not is_admin:
         print("⚠️ Se recomienda ejecutar como administrador para mejores resultados.")
-    
+
     main()
